@@ -1,0 +1,25 @@
+{
+	"name": "Extensions Reloader",
+	"manifest_version": 2,
+	"version": "1.12",
+	"icons": {
+		"16": "icon16.png",
+		"48": "icon48.png",
+		"128": "icon128.png"
+	},
+	"background": {
+		"page": "background.html"
+	},
+	"permissions": [
+		"tabs",
+		"management",
+		"webRequest",
+		"webRequestBlocking",
+		"http://reload.extensions/"
+	],
+	"browser_action": {
+		"default_icon": "icon19.png",
+		"default_title": "Reload Extensions"
+	},
+	"description": "Reload all unpacked extensions using the extension's toolbar button or by browsing to \"http://reload.extensions\""
+}
