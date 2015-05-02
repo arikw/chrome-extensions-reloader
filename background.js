@@ -9,18 +9,18 @@ function reloadExtensions()
 				(ext.enabled == true) &&
 				(ext.name != "Extensions Reloader")) {
 					console.log(ext.name + " reloaded");
-                    (function(extensionId, extensionType) {
-                        // disable
-					    chrome.management.setEnabled(extensionId, false, function () {
-					        // re-enable
-					        chrome.management.setEnabled(extensionId, true, function () {
-					            // re-launch packaged app
-					            if (extensionType == "packaged_app") {
-					                chrome.management.launchApp(extensionId);
-					            }
-                            });
-                        });
-                    })(ext.id, ext.type);
+					(function (extensionId, extensionType) {
+						// disable
+						chrome.management.setEnabled(extensionId, false, function() {
+							// re-enable
+							chrome.management.setEnabled(extensionId, true, function() {
+								// re-launch packaged app
+								if (extensionType == "packaged_app") {
+									chrome.management.launchApp(extensionId);
+								}
+							});
+						});
+					})(ext.id, ext.type);
 			}
 		}
 	});
