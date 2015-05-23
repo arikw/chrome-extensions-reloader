@@ -60,4 +60,5 @@ chrome.webRequest.onBeforeRequest.addListener(
 
 chrome.browserAction.onClicked.addListener(function(tab) {
 	reloadExtensions();
+	chrome.tabs.reload(tab.id);
 });
