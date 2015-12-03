@@ -10,9 +10,22 @@
 	"background": {
 		"page": "background.html"
 	},
+	"commands": {
+      "reload": {
+         "description": "Reload all extensions in development.",
+         "suggested_key": {
+            "default": "Alt+R"
+         }
+      }
+   },
+   "options_ui": {
+    "page": "options.html",
+    "chrome_style": true
+  },
 	"permissions": [
 		"tabs",
 		"management",
+		"storage",
 		"webRequest",
 		"webRequestBlocking",
 		"http://reload.extensions/"
