@@ -24,14 +24,30 @@ function reloadExtensions()
 			}
 		}
 	});
-	
+
+	// Reload the current tab based on option value
+	chrome.storage.sync.get("reloadPage", function(item) {
+		if (item.reloadPage) {
+				chrome.tabs.getSelected(null, function(tab) {
+			    chrome.tabs.reload(tab.id);
+				});
+		}
+	})
+
 	// show an "OK" badge
 	chrome.browserAction.setBadgeText({text: "OK"});
 	chrome.browserAction.setBadgeBackgroundColor({color: "#4cb749"});
 	setTimeout(function() {
 		chrome.browserAction.setBadgeText({text: ""});
 	}, 1000);
+
 }
+
+chrome.commands.onCommand.addListener(function(command) {
+	if (command == "reload") {
+		reloadExtensions();
+	}
+});
 
 // intercept url
 chrome.webRequest.onBeforeRequest.addListener(
@@ -48,7 +64,7 @@ chrome.webRequest.onBeforeRequest.addListener(
 			redirectUrl: chrome.extension.getURL("close.html")
 		};
     }
-	
+
 	return {cancel: false};
   },
   {
