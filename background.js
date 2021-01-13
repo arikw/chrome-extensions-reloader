@@ -25,15 +25,6 @@ function reloadExtensions() {
 		}
 	});
 
-	// Reload the current tab based on option value
-	chrome.storage.sync.get("reloadPage", function(item) {
-		if (item.reloadPage) {
-            chrome.tabs.getSelected(null, function(tab) {
-			    chrome.tabs.reload(tab.id);
-            });
-		}
-	});
-
 	// show an "OK" badge
 	chrome.browserAction.setBadgeText({text: "OK"});
 	chrome.browserAction.setBadgeBackgroundColor({color: "#4cb749"});
@@ -43,9 +34,24 @@ function reloadExtensions() {
 
 }
 
+function maybeReloadCurrentPage(reload)
+{
+	reload = reload || function() {
+		chrome.tabs.getSelected(null, function(tab) {
+			chrome.tabs.reload(tab.id);
+		});
+	};
+
+	chrome.storage.sync.get("reloadPage", function(item) {
+		if (item.reloadPage)
+			reload();
+	});
+}
+
 chrome.commands.onCommand.addListener(function(command) {
 	if (command === "reload") {
 		reloadExtensions();
+		maybeReloadCurrentPage();
 	}
 });
 
@@ -57,6 +63,14 @@ chrome.webRequest.onBeforeRequest.addListener(
 		chrome.tabs.get(details.tabId, function(tab) {
 			if (tab.selected === false) {
 				chrome.tabs.remove(details.tabId);
+			} else {
+				var tabChange = function(tab,window) {
+					chrome.tabs.reload(tab.id);
+					chrome.tabs.onActiveChanged.removeListener(tabChange);
+				};
+				maybeReloadCurrentPage(function() {
+					chrome.tabs.onActiveChanged.addListener(tabChange);
+				});
 			}
 		});
 		return {
@@ -76,4 +90,5 @@ chrome.webRequest.onBeforeRequest.addListener(
 
 chrome.browserAction.onClicked.addListener(function(/*tab*/) {
 	reloadExtensions();
+	maybeReloadCurrentPage();
 });
