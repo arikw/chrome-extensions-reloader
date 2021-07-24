@@ -1,3 +1,9 @@
+const state = {
+	currentTabId: 0,
+	previousTabId: 0,
+	loglevel: !('update_url' in chrome.runtime.getManifest()) ? 'debug' : null
+};
+
 function reloadExtensions() {
     
 	// find all unpacked extensions and reload them
@@ -26,11 +32,14 @@ function reloadExtensions() {
 	});
 
 	// Reload the current tab based on option value
-	chrome.storage.sync.get("reloadPage", function(item) {
-		if (item.reloadPage) {
-            chrome.tabs.getSelected(null, function(tab) {
-			    chrome.tabs.reload(tab.id);
-            });
+	chrome.storage.sync.get("reloadPage", async function(item) {
+
+		if (!item.reloadPage) { return; }
+		
+		const tab = await getCurrentTab() || {};
+		const currentUrl = tab.url ? new URL(tab.url) : {};
+		if (currentUrl.hostname !== 'reload.extensions') {
+			chrome.tabs.reload(state.currentTabId);
 		}
 	});
 
@@ -43,6 +52,45 @@ function reloadExtensions() {
 
 }
 
+chrome.windows.onFocusChanged.addListener(function (windowId) {
+	if (windowId !== chrome.windows.WINDOW_ID_NONE) {
+		refreshState();
+	}
+});
+
+chrome.tabs.onActivated.addListener(function({ tabId }) {
+	setCurrentTab(tabId);
+});	
+
+async function getCurrentTab() {
+	return new Promise(function (resolve) {
+		chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+			resolve((tabs.length > 0) ? tabs[0] : null);
+		});
+	});
+}
+
+async function getCurrentTabId() {
+	const tab = await getCurrentTab();
+	if (tab) {
+		return tab.id;
+	}
+	
+	return 0;
+}
+
+function setCurrentTab(id) {
+	
+	if (state.currentTabId === id) {
+		log('skipped setCurrentTab');
+		return;
+	}
+	state.previousTabId = state.currentTabId;
+	state.currentTabId = id;
+	
+	log('previousTabId', state.previousTabId, 'currentTabId', state.currentTabId);
+}
+
 chrome.commands.onCommand.addListener(function(command) {
 	if (command === "reload") {
 		reloadExtensions();
@@ -53,15 +101,34 @@ chrome.commands.onCommand.addListener(function(command) {
 chrome.webRequest.onBeforeRequest.addListener(
   function(details) {
     if (details.url.indexOf("http://reload.extensions") >= 0) {
-		reloadExtensions();
-		chrome.tabs.get(details.tabId, function(tab) {
-			const pendingURL = new URL(tab.pendingUrl);
+		chrome.tabs.get(details.tabId, async function(tab) {
+			const pendingURL = tab.pendingUrl ? new URL(tab.pendingUrl) : {};
 			const isSafeToCloseTab =
 				pendingURL.hostname === 'reload.extensions' &&
 				!tab.url; // tab has not yet committed => a newly created tab
 			if (isSafeToCloseTab) {
-				chrome.tabs.remove(details.tabId);
+
+				let tabId = await getCurrentTabId();
+				log('before close: ', tabId);
+
+				await chrome.tabs.remove(details.tabId);
+				tabId = await getCurrentTabId();
+				log('after close: ', tabId);
+
+				if (tabId !== state.currentTabId) {
+					setCurrentTab(state.previousTabId);
+	
+					await chrome.tabs.update(state.currentTabId, { highlighted: true });
+	
+					tabId = await getCurrentTabId();
+					log('after focus tab: ', tabId);
+	
+				}
+
+				await refreshState();
 			}
+
+			reloadExtensions();
 		});
     }
 
@@ -77,3 +144,16 @@ chrome.webRequest.onBeforeRequest.addListener(
 chrome.browserAction.onClicked.addListener(function(/*tab*/) {
 	reloadExtensions();
 });
+
+function log(...args) {
+	if (state.loglevel === 'debug') {
+		console.log(...args);
+	}
+}
+
+async function refreshState() {
+	const tabId = await getCurrentTabId();
+	setCurrentTab(tabId);
+}
+
+refreshState();
