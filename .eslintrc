@@ -1,0 +1,67 @@
+{
+  "root": true,
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "script",
+    "ecmaFeatures": {
+      "impliedStrict": true
+    }
+  },
+  "env": {
+    "browser": false,
+    "node": true,
+    "es6": true
+  },
+  "extends": [
+    "eslint:recommended"
+  ],
+  "plugins": [],
+  "rules": {
+    "no-tabs": "warn",
+    "indent": ["warn", 2, { "SwitchCase": 1 }],
+    "eol-last": "off",
+    "no-undef": "warn",
+    "semi": ["error", "always"],
+    "no-console": "off",
+    "no-useless-escape": "off",
+    "no-empty": "off",
+    "camelcase": ["warn", { "properties": "never" }],
+    "no-var": ["error"],
+    "prefer-const": ["error"],
+    "block-spacing": ["warn", "always"],
+    "comma-spacing": ["warn", { "before": false, "after": true }],
+    "comma-style": ["warn", "last"],
+    "comma-dangle": ["warn", "never"],
+    "curly": ["warn"],
+    "brace-style": ["warn", "1tbs", { "allowSingleLine": true }],
+    "no-mixed-operators": ["warn", { "allowSamePrecedence": true }],
+    "operator-linebreak": ["warn", "after"],
+    "object-curly-newline": ["warn", { "consistent": true }],
+    "object-curly-spacing": ["warn", "always"],
+    "array-bracket-newline": ["warn", "consistent"],
+    "array-element-newline": ["warn", "consistent"],
+    "semi-spacing": "warn",
+    "space-before-blocks": ["warn", "always"],
+    "space-infix-ops": ["warn", { "int32Hint": false }],
+    "space-unary-ops": "warn",
+    "no-mixed-spaces-and-tabs": "warn",
+    "no-whitespace-before-property": "warn",
+    "switch-colon-spacing": "error",
+    "key-spacing": ["warn"],
+    "keyword-spacing": ["warn", { "before": true }],
+    "space-before-function-paren": [
+      "warn",
+      { "anonymous": "always", "named": "never", "asyncArrow": "always" }
+    ],
+    "no-unused-vars": ["error", { "vars": "all", "args": "none" }],
+    "no-unsafe-optional-chaining": "error",
+    "quotes": ["warn", "single", { "avoidEscape": true }],
+    "no-param-reassign": "error",
+
+    "no-prototype-builtins": "off"
+  },
+
+  "globals": {
+    "chrome": "readonly"
+  }
+}
