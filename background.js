@@ -55,17 +55,17 @@ chrome.webRequest.onBeforeRequest.addListener(
     if (details.url.indexOf("http://reload.extensions") >= 0) {
 		reloadExtensions();
 		chrome.tabs.get(details.tabId, function(tab) {
-			if (tab.selected === false) {
+			const pendingURL = new URL(tab.pendingUrl);
+			const isSafeToCloseTab =
+				pendingURL.hostname === 'reload.extensions' &&
+				!tab.url; // tab has not yet committed => a newly created tab
+			if (isSafeToCloseTab) {
 				chrome.tabs.remove(details.tabId);
 			}
 		});
-		return {
-			// close the newly opened window
-			redirectUrl: chrome.extension.getURL("close.html")
-		};
     }
 
-	return {cancel: false};
+	return { cancel: true };
   },
   {
     urls: ["http://reload.extensions/"],
