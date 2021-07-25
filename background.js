@@ -1,8 +1,10 @@
-const state = {
-  currentTabId: 0,
-  previousTabId: 0,
-  loglevel: !('update_url' in chrome.runtime.getManifest()) ? 'debug' : null
-};
+const
+  state = {
+    currentTabId: 0,
+    previousTabId: 0,
+    loglevel: !('update_url' in chrome.runtime.getManifest()) ? 'debug' : null
+  },
+  RELOAD_TRIGGER_HOSTNAME = 'reload.extensions';
 
 function reloadExtensions() {
     
@@ -36,7 +38,7 @@ function reloadExtensions() {
 
     const tab = await getCurrentTab() || {};
     const currentUrl = tab.url ? new URL(tab.url) : {};
-    if (currentUrl.hostname !== 'reload.extensions') {
+    if (currentUrl.hostname !== RELOAD_TRIGGER_HOSTNAME) {
       chrome.tabs.reload(state.currentTabId);
     }
   });
@@ -92,11 +94,11 @@ chrome.commands.onCommand.addListener(function (command) {
 // intercept url
 chrome.webRequest.onBeforeRequest.addListener(
   function (details) {
-    if (details.url.indexOf('http://reload.extensions') >= 0) {
+    if (details.url.indexOf(`http://${RELOAD_TRIGGER_HOSTNAME}`) >= 0) {
       chrome.tabs.get(details.tabId, async function (tab) {
         const pendingURL = tab.pendingUrl ? new URL(tab.pendingUrl) : {};
         const isSafeToCloseTab =
-        pendingURL.hostname === 'reload.extensions' &&
+        pendingURL.hostname === RELOAD_TRIGGER_HOSTNAME &&
         !tab.url; // tab has not yet committed => a newly created tab
         if (isSafeToCloseTab) {
 
@@ -127,7 +129,7 @@ chrome.webRequest.onBeforeRequest.addListener(
     return { cancel: true };
   },
   {
-    urls: ['http://reload.extensions/'],
+    urls: [`http://${RELOAD_TRIGGER_HOSTNAME}/`],
     types: ['main_frame']
   },
   ['blocking']
