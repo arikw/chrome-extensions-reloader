@@ -1,7 +1,7 @@
 {
 	"name": "Extensions Reloader",
 	"manifest_version": 2,
-	"version": "1.12",
+	"version": "1.15",
 	"icons": {
 		"16": "icon16.png",
 		"48": "icon48.png",
@@ -12,9 +12,9 @@
 	},
 	"commands": {
       "reload": {
-         "description": "Reload all extensions in development.",
+         "description": "Reload all extensions in development",
          "suggested_key": {
-            "default": "Alt+R"
+            "default": "Alt+Shift+R"
          }
       }
    },
