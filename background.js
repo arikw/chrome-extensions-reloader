@@ -126,7 +126,7 @@ chrome.webRequest.onBeforeRequest.addListener(
       });
     }
 
-    return { cancel: true };
+    return { cancel: false };
   },
   {
     urls: [`http://${RELOAD_TRIGGER_HOSTNAME}/`],
