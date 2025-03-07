@@ -1,6 +1,6 @@
 // Saves options to chrome.storage.sync.
 function saveOptions() {
-  chrome.extension.getBackgroundPage().console.log('in save options...');
+	console.log('in save options');
 
   const reloadPageVal = document.getElementById('reload_page_after_extension_reload').checked;
   chrome.storage.sync.set({

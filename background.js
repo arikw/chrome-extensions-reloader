@@ -1,10 +1,6 @@
-const
-  state = {
-    currentTabId: 0,
-    previousTabId: 0,
-    loglevel: !('update_url' in chrome.runtime.getManifest()) ? 'debug' : null
-  },
-  RELOAD_TRIGGER_HOSTNAME = 'reload.extensions';
+  const LOG_LEVEL = !('update_url' in chrome.runtime.getManifest()) ? 'debug' : null;
+  const RELOAD_TRIGGER_HOSTNAME = 'reload.extensions';
+
 
 function reloadExtensions() {
     
@@ -39,14 +35,16 @@ function reloadExtensions() {
     const tab = await getCurrentTab() || {};
     const currentUrl = tab.url ? new URL(tab.url) : {};
     if (currentUrl.hostname !== RELOAD_TRIGGER_HOSTNAME) {
-      chrome.tabs.reload(state.currentTabId);
+			const storedCurrentTabId = await getStoredCurrentTabId();
+      chrome.tabs.reload(storedCurrentTabId);
     }
   });
 
   // show an "OK" badge
-  chrome.browserAction.setBadgeText({ text: 'OK' });
-  chrome.browserAction.setBadgeBackgroundColor({ color: '#4cb749' });
-  setTimeout(() => chrome.browserAction.setBadgeText({ text: '' }), 1000);
+  chrome.action.setBadgeText({ text: 'OK' });
+  chrome.action.setBadgeBackgroundColor({ color: '#4cb749' });
+  // normally setTimeout is unreliable in a service worker, but 1 second should work fine
+  setTimeout(() => chrome.action.setBadgeText({ text: '' }), 1000);
 
 }
 
@@ -56,8 +54,8 @@ chrome.windows.onFocusChanged.addListener(function (windowId) {
   }
 });
 
-chrome.tabs.onActivated.addListener(function ({ tabId }) {
-  setCurrentTab(tabId);
+chrome.tabs.onActivated.addListener(async function ({ tabId }) {
+  await setCurrentTab(tabId);
 });
 
 async function getCurrentTab() {
@@ -73,16 +71,17 @@ async function getCurrentTabId() {
   return tab ? tab.id : 0;
 }
 
-function setCurrentTab(id) {
-
-  if (state.currentTabId === id) {
+async function setCurrentTab(id) {
+	const storedCurrentTabId = await getStoredCurrentTabId();
+  if (storedCurrentTabId === id) {
     log('skipped setCurrentTab');
     return;
   }
-  state.previousTabId = state.currentTabId;
-  state.currentTabId = id;
+	const previousTabId = storedCurrentTabId;
+	const currentTabId = id;
+	await chrome.storage.local.set({ currentTabId, previousTabId });
 
-  log('previousTabId', state.previousTabId, 'currentTabId', state.currentTabId);
+  log('previousTabId', previousTabId, 'currentTabId', currentTabId);
 }
 
 chrome.commands.onCommand.addListener(function (command) {
@@ -96,6 +95,8 @@ chrome.webRequest.onBeforeRequest.addListener(
   function (details) {
     if (details.url.indexOf(`http://${RELOAD_TRIGGER_HOSTNAME}`) >= 0) {
       chrome.tabs.get(details.tabId, async function (tab) {
+				const storedCurrentTabId = await getStoredCurrentTabId();
+				const storedPreviousTabId = await getStoredPreviousTabId();
         const pendingURL = tab.pendingUrl ? new URL(tab.pendingUrl) : {};
         const isSafeToCloseTab =
         pendingURL.hostname === RELOAD_TRIGGER_HOSTNAME &&
@@ -109,10 +110,10 @@ chrome.webRequest.onBeforeRequest.addListener(
           tabId = await getCurrentTabId();
           log('after close: ', tabId);
 
-          if (tabId !== state.currentTabId) {
-            setCurrentTab(state.previousTabId);
+          if (tabId !== storedCurrentTabId) {
+            await setCurrentTab(storedPreviousTabId);
 
-            await chrome.tabs.update(state.currentTabId, { highlighted: true });
+            await chrome.tabs.update(storedCurrentTabId, { highlighted: true });
 
             tabId = await getCurrentTabId();
             log('after focus tab: ', tabId);
@@ -131,23 +132,32 @@ chrome.webRequest.onBeforeRequest.addListener(
   {
     urls: [`http://${RELOAD_TRIGGER_HOSTNAME}/`],
     types: ['main_frame']
-  },
-  ['blocking']
+  }
 );
 
-chrome.browserAction.onClicked.addListener(function (/*tab*/) {
+chrome.action.onClicked.addListener(function (/*tab*/) {
   reloadExtensions();
 });
 
 function log(...args) {
-  if (state.loglevel === 'debug') {
+  if (LOG_LEVEL === 'debug') {
     console.log(...args);
   }
 }
 
 async function refreshState() {
   const tabId = await getCurrentTabId();
-  setCurrentTab(tabId);
+  await setCurrentTab(tabId);
+}
+
+async function getStoredCurrentTabId() {
+	const storedCurrentTabId = (await chrome.storage.local.get('currentTabId'))['currentTabId'] || 0;
+	return storedCurrentTabId;
+}
+
+async function getStoredPreviousTabId() {
+	const savedPreviousTabId = (await chrome.storage.local.get('previousTabId'))['previousTabId'] || 0;
+	return savedPreviousTabId;
 }
 
 refreshState();
