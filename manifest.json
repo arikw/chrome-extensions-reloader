@@ -1,14 +1,14 @@
 {
 	"name": "Extensions Reloader",
-	"manifest_version": 2,
-	"version": "1.15",
+	"manifest_version": 3,
+	"version": "2.0",
 	"icons": {
 		"16": "icon16.png",
 		"48": "icon48.png",
 		"128": "icon128.png"
 	},
 	"background": {
-		"page": "background.html"
+		"service_worker": "background.js"
 	},
 	"commands": {
       "reload": {
@@ -20,17 +20,18 @@
    },
    "options_ui": {
     "page": "options.html",
-    "chrome_style": true
+    "open_in_tab": true
   },
 	"permissions": [
 		"tabs",
 		"management",
 		"storage",
-		"webRequest",
-		"webRequestBlocking",
+		"webRequest"
+	],
+	"host_permissions": [
 		"http://reload.extensions/"
 	],
-	"browser_action": {
+	"action": {
 		"default_icon": "icon19.png",
 		"default_title": "Reload Extensions"
 	},
